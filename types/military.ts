@@ -6,4 +6,5 @@ enum Militaries {
   Five,  
   Three
 }
+
 export default Militaries;

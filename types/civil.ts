@@ -11,4 +11,5 @@ enum Civils {
   LongLegSeven, 
   RedMalletSix
 }
+
 export default Civils;

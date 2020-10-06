@@ -1,5 +1,6 @@
 enum Suits {
-  Civil, 
-  Military
+  Civil,
+  Military,
 }
+
 export default Suits;

@@ -1,15 +1,8 @@
-import ask from './util';
-import Deck from './types/deck'
+import Game from "./common/game";
 
 async function main() {
-  var name = await ask("What's you name? ");
-  console.log(`Nice to meet you ${name}`);
-
-  const currentDeck = new Deck();
-  currentDeck.shuffleDeck();
-  console.clear();
-  currentDeck.showDeck();
-
+  const game = new Game({ numOfRounds: 10 });
+  game.start();
 }
 
 main();

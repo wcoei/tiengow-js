@@ -1,4 +1,4 @@
-const ask = (query: string) => {
+export function ask(query: string): Promise<string> {
   const readline = require("readline").createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -10,5 +10,10 @@ const ask = (query: string) => {
       resolve(answer);
     })
   );
-};
-export default ask;
+}
+
+export function sleep(ms: number): Promise<string> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
