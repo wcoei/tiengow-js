@@ -1,15 +1,18 @@
 import faker from "faker";
 
 import Round from "./round";
-import Player from "./player";
+import Player from "../types/player";
+import State from "../types/state";
+import Tiles from "../types/tile";
 import { ask } from "./util";
-import { setPriority } from "os";
 
 class Game {
   public numOfRounds = 2;
-  public currentRound = 0;
+  public currentRoundIndex = 0;
   public rounds: Round[] = [];
-  public players: Player[] = [];
+  public players: Player[] = []; 
+  public state?: State;
+  public myPlayerId: number = 0;
 
   constructor({ numOfRounds }: { numOfRounds?: number }) {
     this.numOfRounds = numOfRounds!;
@@ -42,16 +45,28 @@ class Game {
     this.players.forEach((player) => {
       console.log(`Name: ${player.name}`);
     });
+
     for (var r = 0; r < this.numOfRounds; r++) {
-      console.log(`Round ${r + 1} start.`);
+      this.currentRoundIndex = r;
+      
       const round: Round = new Round(this.players, 0, 1);
+      this.state = round.getState(this.myPlayerId);
+      console.clear();
+      console.log(`Round ${r + 1} start.`);
+      this.displayState();
+
       while (!round.isEnd) {
         if (round.currentPlayer == 0) {
           await ask('Wait for your action: e.g "1 2 5"');
         }
+        //check action legal or not 
         round.step("");
       }
+      this.rounds.push(round);
     }
+  }
+  displayState() {
+    console.log(this.state?.myOnHandDeck?.map(tile => tile.code).join(", "));
   }
 }
 

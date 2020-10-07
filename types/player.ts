@@ -1,4 +1,4 @@
-import Tiles from "../types/tile";
+import Tiles from "./tile";
 
 class Player {
   public name: string;
@@ -10,10 +10,6 @@ class Player {
     this.name = name;
     this.isCheat = isCheat;
     this.isCPU = isCPU;
-  }
-
-  getNewDeck(deck: Tiles[]) {
-    this.deck = deck;
   }
 }
 

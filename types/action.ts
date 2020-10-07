@@ -3,7 +3,7 @@ import ActionTypes from "./actionTypes";
 
 class Action {
   public playerId: number;
-  public actionType: ActionTypes;
+  public actionType: string;
   public tiles: Tiles[];
 
   constructor({
@@ -16,7 +16,7 @@ class Action {
     tiles: Tiles[];
   }) {
     this.playerId = playerId;
-    this.actionType = actionType;
+    this.actionType = "actionType";
     this.tiles = tiles.sort((tile1, tile2) => tile1.id - tile2.id);
   }
 }

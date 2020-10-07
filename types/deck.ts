@@ -4,7 +4,9 @@ import Tiles from "./tile";
 import Militaries from "./military";
 import Suits from "./suit";
 import Civils from "./civil";
-import TileSet from "./tileSet";
+import tileSet from "./tileSet";
+import combintations from "./combination";
+import combinations from "./combination";
 
 class Deck {
   public playerDecks: Tiles[][];
@@ -13,11 +15,10 @@ class Deck {
     this.playerDecks = this.newDecks();
   }
 
-  
   newDecks(): Tiles[][] {
-    let shuffuledSet: Tiles[] = this._shuffle(TileSet);
-    return _.chunk(shuffuledSet, 8).map(playerDeck => {
-      return playerDeck.sort((tile1, tile2) => tile1.id - tile2.id )
+    let shuffuledSet: Tiles[] = this._shuffle(tileSet);
+    return _.chunk(shuffuledSet, 8).map((playerDeck) => {
+      return playerDeck.sort((tile1, tile2) => tile1.id - tile2.id);
     });
   }
 
@@ -43,9 +44,55 @@ class Deck {
   showDecks(): void {
     this.playerDecks.forEach((playerTiles: Tiles[]) => {
       console.log(
-        playerTiles.map((tile) => {
-          return tile.id;
-        }).join(",")
+        playerTiles
+          .map((tile) => {
+            return tile.id;
+          })
+          .join(",")
+      );
+    });
+  }
+
+  getLegalCombination() {
+    let tiles = this.playerDecks[0];
+    let combos = [];
+    let temp = [];
+    let slent = Math.pow(2, tiles.length);
+
+    for (let i = 0; i < slent; i++) {
+      temp = [];
+      for (let j = 0; j < tiles.length; j++) {
+        if (i & Math.pow(2, j)) {
+          temp.push(tiles[j]);
+        }
+      }
+      if (temp.length > 0) {
+        combos.push(temp);
+      }
+    }
+
+    let legalCombos = combos
+      .sort((a, b) => b.length - a.length)
+      .map((combo) => {
+        return {
+          code: combo.map((tile) => tile.code).join("_"),
+          tiles: combo,
+        };
+      })
+      .map((combo) => {
+        return {
+          combination: combinations.find(
+            (element) => element.code == combo.code
+          ),
+          tiles: combo.tiles,
+        };
+      })
+      .filter((combo) => combo.combination != undefined);
+    legalCombos.forEach((combo) => {
+      console.log(
+        `${combo.combination?.code}(${
+          combo.combination?.type
+        }): ${combo.tiles.map((tile) => tile.code).join(", ")}`
       );
     });
   }

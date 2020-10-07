@@ -1,15 +1,15 @@
-import { countBy } from "lodash";
-
 enum CombintationTypes {
-  SingleCivil,
-  SingleMilitary,
-  DoubleCivil, 
-  DoubleMilitary, 
-  PrimeCivil,
-  PrimeMilitary,
-  TripletCivilPair,
-  TripletMilitaryPair,
-  Quadruple
+  Pass = "Pass",
+  SingleCivil = "SingleCivil",
+  SingleMilitary = "SingleMilitary",
+  CivilMilitary = "CivilMilitary",
+  DoubleCivil = "DoubleCivil", 
+  DoubleMilitary = "DoubleMilitary", 
+  PrimeCivil = "PrimeCivil",
+  PrimeMilitary = "PrimeMilitary",
+  TripletCivilPair = "TripletCivilPair",
+  TripletMilitaryPair = "TripletMilitaryPair",
+  Quadruple = "Quadruple"
 }
 
 export default CombintationTypes;
