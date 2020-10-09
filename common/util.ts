@@ -17,3 +17,12 @@ export function sleep(ms: number): Promise<string> {
     setTimeout(resolve, ms);
   });
 }
+
+export function pickRandomNumbers(from: number, to: number, count: number): number [] {
+  var result = [];
+  while(result.length < count){
+    var r = from + Math.floor(Math.random() * to);
+    if(result.indexOf(r) === -1) result.push(r);
+}
+  return result.sort((num1, num2) => num1 - num2);
+}

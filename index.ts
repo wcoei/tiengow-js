@@ -1,11 +1,9 @@
 import Game from "./common/game";
-import Deck from "./types/deck";
+import { pickRandomNumbers} from "./common/util";
 
 async function main() {
-  const game = new Game({ numOfRounds: 2 });
-  const deck = new Deck();
-  deck.getLegalCombination();
-  //game.start();
+  const game = new Game({ numOfRounds: 10000 });
+  game.start();
 }
 
 main();

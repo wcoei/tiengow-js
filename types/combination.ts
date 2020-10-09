@@ -1,8 +1,10 @@
-import CombintationTypes from "./combintationType";
-import ct from "./combintationType";
+import CombintationTypes from "./combinationType";
+import ct from "./combinationType";
 
-interface combinationDetail {
-  code: string, type: ct, rank: number
+export interface combinationDetail {
+  code: string;
+  type: ct;
+  rank: number;
 }
 
 const combinations: combinationDetail[] = [
@@ -110,6 +112,9 @@ const combinations: combinationDetail[] = [
   { code: "EARTH1_EARTH2_EIGHT1_EIGHT2", type: ct.Quadruple, rank: 1 },
   { code: "MAN1_MAN2_SEVEN1_SEVEN2", type: ct.Quadruple, rank: 2 },
   { code: "HARMONY1_HARMONY2_FIVE1_FIVE2", type: ct.Quadruple, rank: 3 },
+
+  //Pass
+  { code: "PASS", type: ct.Pass, rank: -999 },
 ];
 
 export default combinations;

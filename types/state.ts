@@ -1,11 +1,11 @@
 import Tiles from './tile';
-import Action from './action'
-import ActionTypes from './actionTypes';
+import Action from './action';
+import RoundResult from './roundResult';
 
 interface State
 {
+  hostPlayer: number;
   currentPlayer: number;
-  currentHouse: number;
   multiplier: number;
   playerDecks?: Tiles[][];
   shownDecks?: Tiles[][];
@@ -13,6 +13,10 @@ interface State
   myOnHandDeck?: Tiles[],
   turnPlayerActions: Action[];
   turnWinningAction?: Action;
+  playerPiles: number[];
+  turnProgress: number;
+  isEnd: boolean;
+  roundResult?: RoundResult;
 };
 
 export default State;

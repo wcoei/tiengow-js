@@ -1,4 +1,4 @@
-enum CombintationTypes {
+enum CombinationTypes {
   Pass = "Pass",
   SingleCivil = "SingleCivil",
   SingleMilitary = "SingleMilitary",
@@ -12,4 +12,4 @@ enum CombintationTypes {
   Quadruple = "Quadruple"
 }
 
-export default CombintationTypes;
+export default CombinationTypes;
