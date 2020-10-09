@@ -149,7 +149,7 @@ class Round {
     this.onHandDecks[this.currentPlayer] = this.onHandDecks[this.currentPlayer].filter((tile) => tile != undefined);
 
     //pay prime bonus if it is not ending the turn
-    if (this.onHandDecks[this.currentPlayer].length == 0) {
+    if (this.onHandDecks[this.currentPlayer].length != 0) {
       if (
         actionResponse.action?.combination.type == CombinationTypes.PrimeCivil ||
         actionResponse.action?.combination.type == CombinationTypes.PrimeMilitary
@@ -176,7 +176,7 @@ class Round {
       this.currentPlayer = this.turnWinningAction?.playerId!;
 
       //if not ending game, evaluate Quadruple Bonus
-      if (!this.isEnd) {
+      if (this.isEnd &&  this.turnWinningAction!.combination.type == CombinationTypes.Quadruple) {
         this._payBonus(this.turnWinningAction!.playerId!, 4);
       }
 
@@ -305,9 +305,9 @@ class Round {
       let primeBonus = 0;
       currentIndex = (currentIndex + 1) % 4;
       if (this.hostPlayer == currentIndex) {
-        primeBonus -= base * multiplier;
+        primeBonus = base * multiplier;
       } else {
-        primeBonus -= base;
+        primeBonus = base;
       }
       this.bonus[currentIndex] -= primeBonus;
       total += primeBonus;
@@ -321,7 +321,7 @@ class Round {
     }
 
     // pre calculate the score from player piles obtained
-    let scores = this.playerPiles.map((piles) => (0 ? -5 : piles - 4));
+    let scores = this.playerPiles.map((piles) => (piles == 0 ? -5 : piles - 4));
     let isCatch = false;
     let bonusMultiplier = 1;
 

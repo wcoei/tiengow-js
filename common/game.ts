@@ -14,9 +14,15 @@ class Game {
   public state?: State;
   public myPlayerId: number = 0;
   public firstPlayer: number = 0;
+  public currentMultiplier = 1;
+  public currentHost = 0;
+  public totalScore = [0, 0, 0, 0];
 
   constructor({ numOfRounds }: { numOfRounds?: number }) {
     this.numOfRounds = numOfRounds!;
+    // throw dice and get the first player
+    this.firstPlayer = Math.floor(Math.random() * 4);
+    this.currentHost = this.firstPlayer;
   }
 
   public registerPlayers(name: string, isCheat: boolean, isCPU: boolean) {
@@ -31,33 +37,47 @@ class Game {
       isCPU = true;
       name = faker.name.findName();
     }
-    this.registerPlayers(name, useCheat.toLowerCase() == "y" ? true : false, isCPU);
+    this.registerPlayers(
+      name,
+      useCheat.toLowerCase() == "y" ? true : false,
+      isCPU
+    );
     for (var i = 0; i < 3; i++) {
-      this.registerPlayers(faker.name.findName(), useCheat.toLowerCase() == "y" ? true : false, isCPU);
+      this.registerPlayers(
+        faker.name.findName(),
+        useCheat.toLowerCase() == "y" ? true : false,
+        isCPU
+      );
     }
     this.players.forEach((player) => {
       console.log(`Name: ${player.name}`);
     });
 
-    //throw dice and get the first player
-    this.firstPlayer = Math.floor(Math.random() * 4);
-
     for (var r = 0; r < this.numOfRounds; r++) {
       this.currentRoundIndex = r;
 
-      const round: Round = new Round(this.players, 0, 1);
+      const round: Round = new Round(
+        this.players,
+        this.currentHost,
+        this.currentMultiplier
+      );
       this.state = round.getState(this.myPlayerId);
       console.clear();
       console.log(`Round ${r + 1} start.`);
 
       while (!this.state.isEnd) {
         this.displayState();
-        if (this.state.currentPlayer == 0 && !this.players[this.state.currentPlayer].isCPU) {
+        if (
+          this.state.currentPlayer == 0 &&
+          !this.players[this.state.currentPlayer].isCPU
+        ) {
           let pickedIndex: number[] = [];
           let pickedTiles: Tiles[] = [];
           do {
             let isInputValid: boolean = true;
-            const inputString = await ask('Wait for your action, e.g "1 2 5": ');
+            const inputString = await ask(
+              'Wait for your action, e.g "1 2 5": '
+            );
             if (inputString.trim() == "") {
               console.log(`Your input is empty. `);
               continue;
@@ -71,7 +91,11 @@ class Game {
               }
               let digit: number = Number.parseInt(inputNumbers[i]);
               if (digit > this.state.myOnHandDeck!.length || digit < 1) {
-                console.log(`You should choose tiles from position 1 to ${this.state.myOnHandDeck!.length}. `);
+                console.log(
+                  `You should choose tiles from position 1 to ${
+                    this.state.myOnHandDeck!.length
+                  }. `
+                );
                 isInputValid = false;
                 break;
               }
@@ -108,11 +132,23 @@ class Game {
         this.state = round.getState(0);
 
         if (this.state.isEnd) {
-          this.firstPlayer = this.state.roundResult!.winner;        
+          this.firstPlayer = this.state.roundResult!.winner;
+          this.totalScore = this.totalScore.map(
+            (score, i) =>
+              (score +=
+                this.state!.roundResult!.payout[i] +
+                this.state!.roundResult!.bonus[i])
+          );
           this.displayState();
-          await sleep(5000);
+          if (this.currentHost == this.state!.roundResult!.winner) {
+            this.currentMultiplier++;
+          } else {
+            this.currentHost = this.state!.roundResult!.winner;
+            this.currentMultiplier = 2;
+          }
+          await sleep(500);
         } else {
-          await sleep(1000);
+          await sleep(10);
         }
       }
     }
@@ -121,40 +157,57 @@ class Game {
   displayState() {
     console.clear();
     console.log(`Turn: ${this.state!.turnProgress + 1}/4`);
-    console.log(`Current Player: ${this.state?.currentPlayer}`);
+    console.log(
+      `Current Player: ${this.state!.currentPlayer}; Current Host: ${
+        this.state!.hostPlayer
+      }; Multiplier:  ${this.state!.multiplier}`
+    );
     if (this.state == undefined) {
       return;
     }
-    /*
-
-    */
+    console.log("\nPlayer shown Tites: ");
     if (this.players[0].isCheat) {
       this.state!.onHandDecks!.forEach((deck, i) => {
         console.log(
-          `Player ${i} (${this.state?.playerPiles[i]}): ${deck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
+          `\tPlayer ${i} (${this.state?.playerPiles[i]}): ${deck
+            .map((tile, i) => `${i + 1}:${tile.code}`)
+            .join(", ")}`
         );
       });
     } else {
       this.state!.shownDecks!.forEach((deck, i) => {
         console.log(
-          `Player ${i} (${this.state?.playerPiles[i]}): ${deck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
+          `\tPlayer ${i} (${this.state?.playerPiles[i]}): ${deck
+            .map((tile, i) => `${i + 1}:${tile.code}`)
+            .join(", ")}`
         );
       });
     }
-    console.log(`My Deck: ${this.state.myOnHandDeck?.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`);
-    console.log("Last turn actions:");
+
+    console.log("\nLast turn actions:");
     this.state.turnPlayerActions.forEach((action, i) => {
       console.log(
-        `${i}--Player ${action.playerId} action: ${action.combination.type}; tiles: [${
-          action.tiles ? action.tiles.map((tiles) => tiles.code).join(", ") : "NOT SHOWN"
+        `\t${i}--Player ${action.playerId} action: ${
+          action.combination.type
+        }; tiles: [${
+          action.tiles
+            ? action.tiles.map((tiles) => tiles.code).join(", ")
+            : "NOT SHOWN"
         }] `
       );
     });
+
+    console.log(
+      `\nMy Deck: ${this.state.myOnHandDeck
+        ?.map((tile, i) => `${i + 1}:${tile.code}`)
+        .join(", ")}`
+    );
+
     if (this.state.roundResult !== undefined) {
-      console.log(`Winner is ${this.players[this.state.roundResult.winner].name}`);
+      console.log(`\nWinner is ${this.state.roundResult.winner}`);
       for (let i = 0; i < this.players.length; i++) {
         console.log(
-          `${this.players[i].name}: gain: ${this.state.roundResult.payout[i]}+(${this.state.roundResult.bonus[i]})`
+          `\tPlayer ${i}: gain: ${this.state.roundResult.payout[i]} (${this.state.roundResult.bonus[i]})\ttotal:${this.totalScore[i]}`
         );
       }
     }
