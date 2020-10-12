@@ -2,7 +2,7 @@ import faker from "faker";
 
 import Round from "./round";
 import Player from "../types/player";
-import State from "../types/state";
+import RoundState from "../types/roundState";
 import Tiles from "../types/tile";
 import { ask, sleep } from "./util";
 
@@ -11,7 +11,7 @@ class Game {
   public currentRoundIndex = 0;
   public rounds: Round[] = [];
   public players: Player[] = [];
-  public state?: State;
+  public roundState?: RoundState;
   public myPlayerId: number = 0;
   public firstPlayer: number = 0;
   public currentMultiplier = 1;
@@ -61,15 +61,15 @@ class Game {
         this.currentHost,
         this.currentMultiplier
       );
-      this.state = round.getState(this.myPlayerId);
+      this.roundState = round.getRoundState(this.myPlayerId);
       console.clear();
       console.log(`Round ${r + 1} start.`);
 
-      while (!this.state.isEnd) {
-        this.displayState();
+      while (!this.roundState!.isEnd) {
+        this.displayState(this.roundState);
         if (
-          this.state.currentPlayer == 0 &&
-          !this.players[this.state.currentPlayer].isCPU
+          this.roundState!.currentPlayer == 0 &&
+          !this.players[this.roundState!.currentPlayer].isCPU
         ) {
           let pickedIndex: number[] = [];
           let pickedTiles: Tiles[] = [];
@@ -90,10 +90,10 @@ class Game {
                 break;
               }
               let digit: number = Number.parseInt(inputNumbers[i]);
-              if (digit > this.state.myOnHandDeck!.length || digit < 1) {
+              if (digit > this.roundState!.myOnHandDeck!.length || digit < 1) {
                 console.log(
                   `You should choose tiles from position 1 to ${
-                    this.state.myOnHandDeck!.length
+                    this.roundState!.myOnHandDeck!.length
                   }. `
                 );
                 isInputValid = false;
@@ -108,7 +108,7 @@ class Game {
             }
             if (isInputValid) {
               pickedTiles = pickedIndex
-                .map((i) => this.state!.myOnHandDeck![i - 1])
+                .map((i) => this.roundState!.myOnHandDeck![i - 1])
                 .sort((tile1, tile2) => tile1!.id - tile2!.id)!;
             } else {
               pickedIndex = [];
@@ -129,55 +129,57 @@ class Game {
           }
         }
 
-        this.state = round.getState(0);
+        this.roundState = round.getRoundState(0);
 
-        if (this.state.isEnd) {
-          this.firstPlayer = this.state.roundResult!.winner;
+        if (this.roundState!.isEnd) {
+          this.firstPlayer = this.roundState!.roundResult!.winner;
           this.totalScore = this.totalScore.map(
             (score, i) =>
               (score +=
-                this.state!.roundResult!.payout[i] +
-                this.state!.roundResult!.bonus[i])
+                this.roundState!.roundResult!.payout[i] +
+                this.roundState!.roundResult!.bonus[i])
           );
-          this.displayState();
-          if (this.currentHost == this.state!.roundResult!.winner) {
+          this.displayState(this.roundState!);
+          if (this.currentHost == this.roundState!.roundResult!.winner) {
             this.currentMultiplier++;
           } else {
-            this.currentHost = this.state!.roundResult!.winner;
+            this.currentHost = this.roundState!.roundResult!.winner;
             this.currentMultiplier = 2;
           }
           await sleep(500);
         } else {
+          console.log(JSON.stringify(round,null,'\t'));
+          await ask("");
           await sleep(10);
         }
       }
     }
   }
 
-  displayState() {
+  displayState(state: RoundState) {
     console.clear();
-    console.log(`Turn: ${this.state!.turnProgress + 1}/4`);
+    console.log(`Turn: ${state.turnProgress + 1}/4`);
     console.log(
-      `Current Player: ${this.state!.currentPlayer}; Current Host: ${
-        this.state!.hostPlayer
-      }; Multiplier:  ${this.state!.multiplier}`
+      `Current Player: ${state.currentPlayer}; Current Host: ${
+        state!.hostPlayer
+      }; Multiplier:  ${state.multiplier}`
     );
-    if (this.state == undefined) {
+    if (state == undefined) {
       return;
     }
     console.log("\nPlayer shown Tites: ");
     if (this.players[0].isCheat) {
-      this.state!.onHandDecks!.forEach((deck, i) => {
+      state!.onHandDecks!.forEach((deck, i) => {
         console.log(
-          `\tPlayer ${i} (${this.state?.playerPiles[i]}): ${deck
+          `\tPlayer ${i} (${state.playerPiles[i]}): ${deck
             .map((tile, i) => `${i + 1}:${tile.code}`)
             .join(", ")}`
         );
       });
     } else {
-      this.state!.shownDecks!.forEach((deck, i) => {
+      state.shownDecks!.forEach((deck, i) => {
         console.log(
-          `\tPlayer ${i} (${this.state?.playerPiles[i]}): ${deck
+          `\tPlayer ${i} (${state.playerPiles[i]}): ${deck
             .map((tile, i) => `${i + 1}:${tile.code}`)
             .join(", ")}`
         );
@@ -185,7 +187,7 @@ class Game {
     }
 
     console.log("\nLast turn actions:");
-    this.state.turnPlayerActions.forEach((action, i) => {
+    state.turnPlayerActions.forEach((action, i) => {
       console.log(
         `\t${i}--Player ${action.playerId} action: ${
           action.combination.type
@@ -198,16 +200,16 @@ class Game {
     });
 
     console.log(
-      `\nMy Deck: ${this.state.myOnHandDeck
+      `\nMy Deck: ${state.myOnHandDeck
         ?.map((tile, i) => `${i + 1}:${tile.code}`)
         .join(", ")}`
     );
 
-    if (this.state.roundResult !== undefined) {
-      console.log(`\nWinner is ${this.state.roundResult.winner}`);
+    if (state.roundResult !== undefined) {
+      console.log(`\nWinner is ${state.roundResult.winner}`);
       for (let i = 0; i < this.players.length; i++) {
         console.log(
-          `\tPlayer ${i}: gain: ${this.state.roundResult.payout[i]} (${this.state.roundResult.bonus[i]})\ttotal:${this.totalScore[i]}`
+          `\tPlayer ${i}: gain: ${state.roundResult.payout[i]} (${state.roundResult.bonus[i]})\ttotal:${this.totalScore[i]}`
         );
       }
     }

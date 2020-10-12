@@ -2,7 +2,7 @@ import Tiles from './tile';
 import Action from './action';
 import RoundResult from './roundResult';
 
-interface State
+interface RoundState
 {
   hostPlayer: number;
   currentPlayer: number;
@@ -19,4 +19,4 @@ interface State
   roundResult?: RoundResult;
 };
 
-export default State;
+export default RoundState;

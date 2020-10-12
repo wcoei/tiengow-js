@@ -4,7 +4,6 @@ class Player {
   public name: string;
   public isCheat: boolean;
   public isCPU: boolean;
-  public deck: Tiles[] = [];
 
   constructor(name: string, isCheat: boolean, isCPU: boolean) {
     this.name = name;

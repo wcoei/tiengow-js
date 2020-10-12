@@ -3,7 +3,7 @@ import _ from "lodash";
 import Deck from "../types/deck";
 import Tiles from "../types/tile";
 import Player from "../types/player";
-import State from "../types/state";
+import RoundState from "../types/roundState";
 import Action from "../types/action";
 import ActionResponse from "../types/actionResponse";
 import combinations, { combinationDetail } from "../types/combination";
@@ -197,7 +197,7 @@ class Round {
     };
   }
 
-  public getState(playerId: number): State {
+  public getRoundState(playerId: number): RoundState {
     return {
       hostPlayer: this.hostPlayer,
       currentPlayer: this.currentPlayer,
