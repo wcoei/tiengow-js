@@ -1,6 +1,6 @@
-import Tiles from "./tile";
+import Tiles from "../types/tile";
 
-class Player {
+abstract class Players {
   public name: string;
   public isCheat: boolean;
   public isCPU: boolean;
@@ -10,6 +10,10 @@ class Player {
     this.isCheat = isCheat;
     this.isCPU = isCPU;
   }
+
+  public autoAction() {
+
+  }
 }
 
-export default Player;
+export default Players;

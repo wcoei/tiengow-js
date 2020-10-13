@@ -1,13 +1,13 @@
 import faker from "faker";
 
 import Round from "./round";
-import Player from "../types/player";
+import Player from "../player/humanPlayer";
 import RoundState from "../types/roundState";
 import Tiles from "../types/tile";
-import { ask, sleep } from "./util";
+import { ask, sleep } from "../common/util";
 
 class Game {
-  public numOfRounds = 8;
+  public numOfRounds = 1;
   public currentRoundIndex = 0;
   public rounds: Round[] = [];
   public players: Player[] = [];
@@ -148,8 +148,8 @@ class Game {
           }
           await sleep(500);
         } else {
-          console.log(JSON.stringify(round,null,'\t'));
-          await ask("");
+          //console.log(JSON.stringify(round,null,'\t'));
+          //await ask("");
           await sleep(10);
         }
       }

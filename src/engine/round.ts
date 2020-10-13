@@ -2,7 +2,7 @@ import _ from "lodash";
 
 import Deck from "../types/deck";
 import Tiles from "../types/tile";
-import Player from "../types/player";
+import Player from "../player/player";
 import RoundState from "../types/roundState";
 import Action from "../types/action";
 import ActionResponse from "../types/actionResponse";
