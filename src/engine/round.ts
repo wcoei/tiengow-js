@@ -10,8 +10,8 @@ import combinations, { combinationDetail } from "../types/combination";
 import CombinationTypes from "../types/combinationType";
 import CombintationTypes from "../types/combinationType";
 import RoundResult from "../types/roundResult";
-import { pickRandomNumbers } from "../common/util";
-import { getAllLegalCombinationFromTiles } from "../common/tileUtil";
+import { pickRandomNumbers} from "../common/util";
+import { getAllLegalCombinationFromTiles, getWinningAction } from "../common/tileUtil";
 import { exception } from "console";
 
 class Round {
@@ -38,6 +38,104 @@ class Round {
     this.hostPlayer = hostPlayer;
     this.multiplier = multiplier;
   }
+
+  public step2(actionResponse: ActionResponse): { isSuccess: boolean; message: string } {
+    //no more action is allowed if the round is ended
+    if (this.isEnd) {
+      return {
+        isSuccess: false,
+        message: "This round is already ended. No more actions is allowed. ",
+      };
+    }
+
+    // if last loop is the end of turn, then reset the turn related variables
+    if (this.turnProgress == 0) {
+      this.turnWinningAction = undefined;
+      this.turnPlayerActions = [];
+    }
+
+    //return if a legal action is not found
+    if (!actionResponse.isSuccess) {
+      return {
+        isSuccess: false,
+        message: actionResponse.message,
+      };
+    }
+    //push to turn player action history
+    this.turnPlayerActions.push(actionResponse.action!);
+    
+    let pickedIndex = actionResponse.action!.tiles.map((tile) => tile.id).sort((tile1, tile2) => tile1 - tile2);
+    let pickedTiles =
+      pickedIndex!
+        .map((i) => this.onHandDecks[this.currentPlayer].find((tile) => tile.id == i)!)
+        .sort((tile1, tile2) => tile1!.id - tile2!.id) ?? [];
+
+    // push tiles to the shownDecks but if the action is PASS, don't push
+    if (actionResponse.action?.combination.code != "PASS") {
+      this.shownDecks[this.currentPlayer] = this.shownDecks[this.currentPlayer]
+        .concat(pickedTiles!)
+        .sort((tile1, tile2) => tile1.id - tile2.id);
+    }
+
+    // remove the tiles which is picked from on hand deck in this action
+    for (let i = pickedIndex.length - 1; i >= 0; i--) {
+      for (let j = this.onHandDecks[this.currentPlayer].length - 1; j >= 0; j--) {
+        if (pickedIndex[i] == this.onHandDecks[this.currentPlayer][j]?.id) {
+          delete this.onHandDecks[this.currentPlayer][j];
+        }
+      }
+    }
+    this.onHandDecks[this.currentPlayer] = this.onHandDecks[this.currentPlayer].filter((tile) => tile != undefined);
+
+    //pay prime bonus if it is not ending the turn
+    if (this.onHandDecks[this.currentPlayer].length != 0) {
+      if (
+        actionResponse.action?.combination.type == CombinationTypes.PrimeCivil ||
+        actionResponse.action?.combination.type == CombinationTypes.PrimeMilitary
+      ) {
+        this._payBonus(this.currentPlayer, 2);
+      }
+    }
+
+    //calculate and update the winning action in this turn
+    this.turnWinningAction = getWinningAction(this.turnPlayerActions);
+
+    this.turnProgress++;
+
+    //all player decks is empty, this is the end of round
+    if (_.flatten(this.onHandDecks).length == 0) {
+      this.isEnd = true;
+    }
+
+    //end of turn
+    if (this.turnProgress == 4) {
+      //winning will take the piles in this round
+      this.playerPiles[this.turnWinningAction!.playerId!] += this.turnWinningAction!.tiles.length!;
+      //the winning of this turn will be the first player of next turn
+      this.currentPlayer = this.turnWinningAction?.playerId!;
+
+      //if not ending game, evaluate Quadruple Bonus
+      if (this.isEnd &&  this.turnWinningAction!.combination.type == CombinationTypes.Quadruple) {
+        this._payBonus(this.turnWinningAction!.playerId!, 4);
+      }
+
+      this.turnProgress = 0;
+    }
+    //if not the end of turn, set the next player to currentPlayer
+    else {
+      this.currentPlayer = (this.currentPlayer + 1) % 4;
+    }
+
+    if (this.isEnd) {
+      this._endRound();
+    }
+
+    return {
+      isSuccess: true,
+      message: actionResponse.action?.toString() ?? "",
+    };
+  }
+
 
   public step(actionTiles?: Tiles[]): { isSuccess: boolean; message: string } {
     //no more action is allowed if the round is ended
@@ -159,7 +257,7 @@ class Round {
     }
 
     //calculate and update the winning action in this turn
-    this.turnWinningAction = this.getWinningAction(this.turnPlayerActions);
+    this.turnWinningAction = getWinningAction(this.turnPlayerActions);
 
     this.turnProgress++;
 
@@ -208,7 +306,8 @@ class Round {
       myOnHandDeck: _.cloneDeep(this.onHandDecks[playerId]),
       turnPlayerActions: _.cloneDeep(this.turnPlayerActions).map((action) => {
         if (!this.players[playerId].isCheat && action.combination.code == "PASS") {
-          action.tiles = [];
+          //action.tiles = [];
+          action.tiles = action.tiles;
         }
         return action;
       }),
@@ -220,15 +319,6 @@ class Round {
     };
   }
 
-  protected getWinningAction(actions: Action[]): Action | undefined {
-    if (actions != undefined && actions.length > 0) {
-      return actions
-        .filter((element) => element.combination.type != CombinationTypes.Pass)
-        .sort((element1, element2) => element1.combination.rank - element2.combination.rank)[0];
-    }
-    return undefined;
-  }
-
   private _getActionFromTiles(playerId: number, actionTiles: Tiles[]): ActionResponse {
     //presort the action tiles
     actionTiles = actionTiles.sort((tile1, tile2) => tile1.id - tile2.id);
@@ -236,7 +326,7 @@ class Round {
 
     //you need to follow previous action, therefore filter those do not follow.
     if (this.turnPlayerActions != undefined && this.turnPlayerActions.length > 0) {
-      const winningAction = this.getWinningAction(this.turnPlayerActions);
+      const winningAction = getWinningAction(this.turnPlayerActions);
 
       //fail if number of tiles does not follow previous action
       if (winningAction!.tiles.length != actionTiles.length) {

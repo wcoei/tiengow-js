@@ -1,5 +1,6 @@
 import Tile from "../types/tile";
-import tileSet from "../types/tileSet";
+import Action from "../types/action";
+import CombinationTypes from "../types/combinationType";
 import tileCombinations, { combinationDetail } from "../types/combination";
 
 export function getAllLegalCombinationFromTiles(deck: Tile[]): { combination: combinationDetail | undefined; tiles: Tile[] }[] {
@@ -41,4 +42,13 @@ export function getAllLegalCombinationFromTiles(deck: Tile[]): { combination: co
     .filter((combo) => combo.combination != undefined);
 
   return legalCombos;
+}
+
+export function getWinningAction(actions: Action[]): Action | undefined {
+  if (actions != undefined && actions.length > 0) {
+    return actions
+      .filter((element) => element.combination.type != CombinationTypes.Pass)
+      .sort((element1, element2) => element1.combination.rank - element2.combination.rank)[0];
+  }
+  return undefined;
 }

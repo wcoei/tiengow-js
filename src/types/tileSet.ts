@@ -1,4 +1,3 @@
-
 import Tiles from "./tile";
 import Militaries from "./military";
 import Suits from "./suit";

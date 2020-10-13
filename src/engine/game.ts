@@ -1,10 +1,13 @@
 import faker from "faker";
 
 import Round from "./round";
-import Player from "../player/humanPlayer";
+import Player from "../player/player";
+import HumanPlayer from "../player/humanPlayer";
+import RandomPlayer from "../player/randomPlayer";
 import RoundState from "../types/roundState";
 import Tiles from "../types/tile";
 import { ask, sleep } from "../common/util";
+import ActionResponse from "../types/actionResponse";
 
 class Game {
   public numOfRounds = 1;
@@ -26,7 +29,12 @@ class Game {
   }
 
   public registerPlayers(name: string, isCheat: boolean, isCPU: boolean) {
-    this.players.push(new Player(name, isCheat, isCPU));
+    if (isCPU) {
+      this.players.push(new RandomPlayer(name, isCheat, isCPU));
+    }
+    else {
+      this.players.push(new HumanPlayer(name, isCheat, isCPU));
+    }
   }
 
   public async start() {
@@ -46,7 +54,7 @@ class Game {
       this.registerPlayers(
         faker.name.findName(),
         useCheat.toLowerCase() == "y" ? true : false,
-        isCPU
+        true
       );
     }
     this.players.forEach((player) => {
@@ -61,7 +69,7 @@ class Game {
         this.currentHost,
         this.currentMultiplier
       );
-      this.roundState = round.getRoundState(this.myPlayerId);
+      this.roundState = round.getRoundState(this.currentHost);
       console.clear();
       console.log(`Round ${r + 1} start.`);
 
@@ -114,14 +122,17 @@ class Game {
               pickedIndex = [];
             }
           } while (pickedTiles.length <= 0);
-          const result = round.step(pickedTiles);
+          let actionResponse = this.players[this.roundState!.currentPlayer].getAction(pickedTiles, this.roundState);
+          const result = round.step2(actionResponse);
           console.log("***" + result.message);
           if (!result.isSuccess) {
             console.log(result.message);
             await ask("");
           }
         } else {
-          const result = round.step();
+          let actionResponse = this.players[this.roundState!.currentPlayer].autoAction(this.roundState);
+          console.log("##action response"+JSON.stringify(actionResponse, null,'\t'));
+          const result = round.step2(actionResponse);
           console.log("***" + result.message);
           if (!result.isSuccess) {
             console.log(result.message);
@@ -129,7 +140,7 @@ class Game {
           }
         }
 
-        this.roundState = round.getRoundState(0);
+        this.roundState = round.getRoundState(this.roundState!.currentPlayer);
 
         if (this.roundState!.isEnd) {
           this.firstPlayer = this.roundState!.roundResult!.winner;
@@ -157,7 +168,7 @@ class Game {
   }
 
   displayState(state: RoundState) {
-    console.clear();
+    //console.clear();
     console.log(`Turn: ${state.turnProgress + 1}/4`);
     console.log(
       `Current Player: ${state.currentPlayer}; Current Host: ${
