@@ -19,7 +19,6 @@ class TerminalRunner {
     this.state = game.getGameState(this._myPlayerId);
     this._displayState(this.state);
     while (!this.state.isEnd) {
-      console.log("loop");
       // only non robot players needs manual input
       if (
         this.state.roundState!.currentPlayer != this._myPlayerId ||
@@ -28,7 +27,6 @@ class TerminalRunner {
         const result = game.step();
         if (!result.isSuccess) {
           console.log(result.message);
-          await ask("error");
           continue;
         }
       } else {
@@ -41,10 +39,11 @@ class TerminalRunner {
       }
       this.state = game.getGameState(this._myPlayerId);
       this._displayState(this.state);
-      if (this.state.roundState!.isEnd 
-        //|| this.state.roundState!.isTurnEnd
-        ) {
+      if (this.state.roundState!.isEnd || this.state.roundState!.isTurnEnd) {
         //await ask("Press enter to continue");
+        if(this.state.players.find(player => !player.isCPU)) {
+          await ask("Press enter to continue. ");
+        }
         await sleep(10);
         const result =  game.step();
         this.state = game.getGameState(this._myPlayerId);
@@ -93,9 +92,8 @@ class TerminalRunner {
     return new Promise((resolve) => resolve(pickedTiles));
   }
   
-
   private _displayState(state: GameState) {
-    //console.clear();
+    console.clear();
     console.log(`Round: ${state.currentRoundIndex+1}`);
     let roundState = state.roundState!;
     if (roundState != undefined) {

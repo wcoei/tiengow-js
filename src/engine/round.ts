@@ -34,6 +34,7 @@ class Round {
   protected roundResult?: RoundResult = undefined;
   protected bonus: number[] = [0, 0, 0, 0];
   protected payout: number[] = [0, 0, 0, 0];
+  protected isTurnEnd = false;
 
   constructor(players: Player[], hostPlayer: number, multiplier: number) {
     this.players = players;
@@ -43,7 +44,7 @@ class Round {
   }
 
   public step(
-    actionResponse: ActionResponse
+    actionResponse?: ActionResponse
   ): { isSuccess: boolean; message: string } {
     //no more action is allowed if the round is ended
     if (this.isEnd) {
@@ -53,11 +54,12 @@ class Round {
       };
     }
 
-    if (this.turnProgress == 4) {
+    if (this.isTurnEnd) {
       console.log("clear turn info");
       this.turnWinningAction = undefined;
       this.turnPlayerActions = [];
       this.turnProgress = 0;
+      this.isTurnEnd = false;
       return {
         isSuccess: true,
         message: "Going to next turn. ",
@@ -71,16 +73,16 @@ class Round {
     }
 
     //return if a legal action is not found
-    if (!actionResponse.isSuccess) {
+    if (!actionResponse!.isSuccess) {
       return {
         isSuccess: false,
-        message: actionResponse.message,
+        message: actionResponse!.message,
       };
     }
     //push to turn player action history
-    this.turnPlayerActions.push(actionResponse.action!);
+    this.turnPlayerActions.push(actionResponse!.action!);
 
-    let pickedIndex = actionResponse
+    let pickedIndex = actionResponse!
       .action!.tiles.map((tile) => tile.id)
       .sort((tile1, tile2) => tile1 - tile2);
     let pickedTiles =
@@ -92,7 +94,7 @@ class Round {
         .sort((tile1, tile2) => tile1!.id - tile2!.id) ?? [];
 
     // push tiles to the shownDecks but if the action is PASS, don't push
-    if (actionResponse.action?.combination.code != "PASS") {
+    if (actionResponse!.action?.combination.code != "PASS") {
       this.shownDecks[this.currentPlayer] = this.shownDecks[this.currentPlayer]
         .concat(pickedTiles!)
         .sort((tile1, tile2) => tile1.id - tile2.id);
@@ -117,9 +119,9 @@ class Round {
     //pay prime bonus if it is not ending the turn
     if (this.onHandDecks[this.currentPlayer].length != 0) {
       if (
-        actionResponse.action?.combination.type ==
+        actionResponse!.action?.combination.type ==
           CombinationTypes.PrimeCivil ||
-        actionResponse.action?.combination.type ==
+        actionResponse!.action?.combination.type ==
           CombinationTypes.PrimeMilitary
       ) {
         this._payBonus(this.currentPlayer, 2);
@@ -138,6 +140,7 @@ class Round {
 
     //end of turn
     if (this.turnProgress == 4) {
+      this.isTurnEnd = true;
       //winning will take the piles in this round
       this.playerPiles[
         this.turnWinningAction!.playerId!
@@ -164,7 +167,7 @@ class Round {
 
     return {
       isSuccess: true,
-      message: actionResponse.action?.toString() ?? "",
+      message: actionResponse!.action?.toString() ?? "",
     };
   }
 
@@ -182,7 +185,7 @@ class Round {
       playerPiles: _.cloneDeep(this.playerPiles),
       isEnd: this.isEnd,
       roundResult: this.roundResult,
-      isTurnEnd: this.turnProgress == 4,
+      isTurnEnd: this.isTurnEnd,
     };
   }
 

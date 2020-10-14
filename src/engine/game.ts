@@ -52,7 +52,15 @@ class Game {
       this.roundState = this.currentRound.getRoundState();
       return {
         isSuccess: true,
-        message: "Enter next round"
+        message: "Enter next round. "
+      };
+    }
+    if (this.roundState!.isTurnEnd) {
+      this.currentRound.step();
+      this.roundState = this.currentRound.getRoundState();
+      return {
+        isSuccess: true,
+        message: "Enter next turn. "
       };
     }
     // if no action tiles is provided, then use the player autoaction
