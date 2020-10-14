@@ -1,4 +1,5 @@
 import faker from "faker";
+import _ from "lodash";
 
 import Round from "./round";
 import Player from "../player/player";
@@ -6,33 +7,67 @@ import HumanPlayer from "../player/humanPlayer";
 import RandomPlayer from "../player/randomPlayer";
 import RoundState from "../types/roundState";
 import Tiles from "../types/tile";
-import { ask, sleep } from "../common/util";
 import ActionResponse from "../types/actionResponse";
+import PlayerType from "../types/playerType";
+import { ask, sleep } from "../common/util";
+import PlayerRegister from "../types/playerRegister";
+import GameState from "../types/gameState";
 
 class Game {
-  public numOfRounds = 1;
-  public currentRoundIndex = 0;
-  public rounds: Round[] = [];
-  public players: Player[] = [];
-  public roundState?: RoundState;
-  public myPlayerId: number = 0;
-  public firstPlayer: number = 0;
-  public currentMultiplier = 1;
-  public currentHost = 0;
-  public totalScore = [0, 0, 0, 0];
+  private numOfRounds = 1;
+  private currentRoundIndex = 0;
+  private players: Player[] = [];
+  private roundState?: RoundState;
+  private firstPlayer: number = 0;
+  private currentMultiplier = 1;
+  private currentHost = 0;
+  private totalScore = [0, 0, 0, 0];
+  private isEnd = false;
+  private currentRound: Round;
 
-  constructor({ numOfRounds }: { numOfRounds?: number }) {
+  constructor(playerRegisters: PlayerRegister[], numOfRounds: number = 100) {
     this.numOfRounds = numOfRounds!;
+    playerRegisters.forEach((player) => {
+      this._registerPlayer(player.name, player.isCheat, player.isCPU, player.playerType);
+    });
+
     // throw dice and get the first player
     this.firstPlayer = Math.floor(Math.random() * 4);
     this.currentHost = this.firstPlayer;
+
+    this.currentRound = new Round(this.players, this.currentHost, this.currentMultiplier);
+    this.roundState = this.currentRound.getRoundState();
   }
 
-  public registerPlayers(name: string, isCheat: boolean, isCPU: boolean) {
+  public getGameState(playerId: number): GameState {
+    return {
+      numOfRounds: this.numOfRounds,
+      currentRoundIndex: this.currentRoundIndex,
+      players: this.players,
+      firstPlayer: this.firstPlayer,
+      roundState: this.roundState,
+      currentMultiplier: this.currentMultiplier,
+      currentHost: this.currentHost,
+      totalScore: this.totalScore,
+      isEnd: this.isEnd,
+    };
+  }
+  private _registerPlayer(name: string, isCheat: boolean, isCPU: boolean, playerType: PlayerType) {
+    switch (playerType) {
+      case PlayerType.Human:
+        this.players.push(new HumanPlayer(name, isCheat, isCPU));
+        break;
+      case PlayerType.Random:
+      default:
+        this.players.push(new RandomPlayer(name, isCheat, isCPU));
+        break;
+    }
+  }
+
+  public registerPlayers_bak(name: string, isCheat: boolean, isCPU: boolean) {
     if (isCPU) {
       this.players.push(new RandomPlayer(name, isCheat, isCPU));
-    }
-    else {
+    } else {
       this.players.push(new HumanPlayer(name, isCheat, isCPU));
     }
   }
@@ -45,17 +80,9 @@ class Game {
       isCPU = true;
       name = faker.name.findName();
     }
-    this.registerPlayers(
-      name,
-      useCheat.toLowerCase() == "y" ? true : false,
-      isCPU
-    );
+    this.registerPlayers_bak(name, useCheat.toLowerCase() == "y" ? true : false, isCPU);
     for (var i = 0; i < 3; i++) {
-      this.registerPlayers(
-        faker.name.findName(),
-        useCheat.toLowerCase() == "y" ? true : false,
-        true
-      );
+      this.registerPlayers_bak(faker.name.findName(), useCheat.toLowerCase() == "y" ? true : false, true);
     }
     this.players.forEach((player) => {
       console.log(`Name: ${player.name}`);
@@ -64,30 +91,20 @@ class Game {
     for (var r = 0; r < this.numOfRounds; r++) {
       this.currentRoundIndex = r;
 
-      const round: Round = new Round(
-        this.players,
-        this.currentHost,
-        this.currentMultiplier
-      );
+      const round: Round = new Round(this.players, this.currentHost, this.currentMultiplier);
       this.roundState = round.getRoundState();
       console.clear();
       console.log(`Round ${r + 1} start.`);
       this.displayState(this.roundState);
 
       while (!this.roundState!.isEnd) {
-
         let myOnHandDeck = this.roundState.onHandDecks![this.roundState!.currentPlayer];
-        if (
-          this.roundState!.currentPlayer == 0 &&
-          !this.players[this.roundState!.currentPlayer].isCPU
-        ) {
+        if (this.roundState!.currentPlayer == 0 && !this.players[this.roundState!.currentPlayer].isCPU) {
           let pickedIndex: number[] = [];
           let pickedTiles: Tiles[] = [];
           do {
             let isInputValid: boolean = true;
-            const inputString = await ask(
-              'Wait for your action, e.g "1 2 5": '
-            );
+            const inputString = await ask('Wait for your action, e.g "1 2 5": ');
             if (inputString.trim() == "") {
               console.log(`Your input is empty. `);
               continue;
@@ -101,11 +118,7 @@ class Game {
               }
               let digit: number = Number.parseInt(inputNumbers[i]);
               if (digit > myOnHandDeck!.length || digit < 1) {
-                console.log(
-                  `You should choose tiles from position 1 to ${
-                    myOnHandDeck.length
-                  }. `
-                );
+                console.log(`You should choose tiles from position 1 to ${myOnHandDeck.length}. `);
                 isInputValid = false;
                 break;
               }
@@ -117,15 +130,13 @@ class Game {
               pickedIndex.push(digit);
             }
             if (isInputValid) {
-              pickedTiles = pickedIndex
-                .map((i) => myOnHandDeck![i - 1])
-                .sort((tile1, tile2) => tile1!.id - tile2!.id)!;
+              pickedTiles = pickedIndex.map((i) => myOnHandDeck![i - 1]).sort((tile1, tile2) => tile1!.id - tile2!.id)!;
             } else {
               pickedIndex = [];
             }
           } while (pickedTiles.length <= 0);
           let actionResponse = this.players[this.roundState!.currentPlayer].getAction(pickedTiles, this.roundState);
-          const result = round.step2(actionResponse);
+          const result = round.step(actionResponse);
           console.log("***" + result.message);
           if (!result.isSuccess) {
             console.log(result.message);
@@ -133,7 +144,7 @@ class Game {
           }
         } else {
           let actionResponse = this.players[this.roundState!.currentPlayer].autoAction(this.roundState);
-          const result = round.step2(actionResponse);
+          const result = round.step(actionResponse);
           if (!result.isSuccess) {
             console.log(result.message);
             await ask("");
@@ -146,10 +157,7 @@ class Game {
         if (this.roundState!.isEnd) {
           this.firstPlayer = this.roundState!.roundResult!.winner;
           this.totalScore = this.totalScore.map(
-            (score, i) =>
-              (score +=
-                this.roundState!.roundResult!.payout[i] +
-                this.roundState!.roundResult!.bonus[i])
+            (score, i) => (score += this.roundState!.roundResult!.payout[i] + this.roundState!.roundResult!.bonus[i])
           );
           this.displayState(this.roundState!);
           if (this.currentHost == this.roundState!.roundResult!.winner) {
@@ -158,12 +166,11 @@ class Game {
             this.currentHost = this.roundState!.roundResult!.winner;
             this.currentMultiplier = 2;
           }
-        } 
-        //wait if not all players are robots  
-        if (this.players.find(player => !player.isCPU)) {
+        }
+        //wait if not all players are robots
+        if (this.players.find((player) => !player.isCPU)) {
           await ask("");
         }
-
       }
     }
   }
@@ -172,9 +179,7 @@ class Game {
     console.clear();
     console.log(`Turn: ${state.turnProgress + 1}/4`);
     console.log(
-      `Current Player: ${state.currentPlayer}; Current Host: ${
-        state!.hostPlayer
-      }; Multiplier:  ${state.multiplier}`
+      `Current Player: ${state.currentPlayer}; Current Host: ${state!.hostPlayer}; Multiplier:  ${state.multiplier}`
     );
     if (state == undefined) {
       return;
@@ -183,17 +188,13 @@ class Game {
     if (this.players[0].isCheat) {
       state!.onHandDecks!.forEach((deck, i) => {
         console.log(
-          `\tPlayer ${i} (${state.playerPiles[i]}): ${deck
-            .map((tile, i) => `${i + 1}:${tile.code}`)
-            .join(", ")}`
+          `\tPlayer ${i} (${state.playerPiles[i]}): ${deck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
         );
       });
     } else {
       state.shownDecks!.forEach((deck, i) => {
         console.log(
-          `\tPlayer ${i} (${state.playerPiles[i]}): ${deck
-            .map((tile, i) => `${i + 1}:${tile.code}`)
-            .join(", ")}`
+          `\tPlayer ${i} (${state.playerPiles[i]}): ${deck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
         );
       });
     }
@@ -201,20 +202,14 @@ class Game {
     console.log("\nLast turn actions:");
     state.turnPlayerActions.forEach((action, i) => {
       console.log(
-        `\t${i}--Player ${action.playerId} action: ${
-          action.combination.type
-        }; tiles: [${
-          action.tiles
-            ? action.tiles.map((tiles) => tiles.code).join(", ")
-            : "NOT SHOWN"
+        `\t${i}--Player ${action.playerId} action: ${action.combination.type}; tiles: [${
+          action.tiles ? action.tiles.map((tiles) => tiles.code).join(", ") : "NOT SHOWN"
         }] `
       );
     });
 
     console.log(
-      `\nMy Deck: ${state.playerDecks![state.currentPlayer]
-        ?.map((tile, i) => `${i + 1}:${tile.code}`)
-        .join(", ")}`
+      `\nMy Deck: ${state.playerDecks![state.currentPlayer]?.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
     );
 
     if (state.roundResult !== undefined) {

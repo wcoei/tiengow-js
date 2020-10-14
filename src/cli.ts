@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import runner from "./runner/terminal";
+import TerminalRunner from "./runner/terminal";
 
-runner();
+const runner = new TerminalRunner();
+runner.run();
 

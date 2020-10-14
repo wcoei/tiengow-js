@@ -39,7 +39,7 @@ class Round {
     this.multiplier = multiplier;
   }
 
-  public step2(actionResponse: ActionResponse): { isSuccess: boolean; message: string } {
+  public step(actionResponse: ActionResponse): { isSuccess: boolean; message: string } {
     //no more action is allowed if the round is ended
     if (this.isEnd) {
       return {
@@ -155,7 +155,7 @@ class Round {
       roundResult: this.roundResult,
     };
   }
-  
+
   private _payBonus(playerId: number, base: number) {
     let currentIndex = playerId;
     let total = 0;
