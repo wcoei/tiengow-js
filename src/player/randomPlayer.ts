@@ -15,20 +15,26 @@ class RandomPlayer extends Player {
 
   public autoAction(state: RoundState) : ActionResponse {
     let myOnHandDeck = state.onHandDecks![state.currentPlayer];
+    console.log("auto1");
     let allCombos = getAllLegalCombinationFromTiles(myOnHandDeck);
+    console.log("auto2");
     let actionResponse;
     //if current player is the first player in this turn, pick a random legal moves
     if (state.turnWinningAction == undefined) {
+      console.log("auto3");
+
       actionResponse = this.getActionFromTiles(
         allCombos[Math.floor(Math.random() * allCombos.length)].tiles, state
       );
+      console.log("auto4");
     }
     // if current player is not the first player in this turn, follow previous order to pick tiles
     else {
+      console.log("auto5");
       if (allCombos != undefined && allCombos.length > 0) {
         allCombos = allCombos.filter((combo) => combo.combination!.code == state.turnWinningAction!.combination.code);
       }
-
+      console.log("auto6");
       //if there is still legal actions, pick a random one
       if (allCombos != undefined && allCombos.length > 0) {
         actionResponse = this.getActionFromTiles(
@@ -37,15 +43,18 @@ class RandomPlayer extends Player {
       }
       //pick random tiles following the previous action and PASS
       else {
+        console.log("auto7");
         let pickedIndex = pickRandomNumbers(
           0,
           myOnHandDeck.length,
           state.turnWinningAction!.tiles.length
         );
+        console.log("auto8");
 
         let pickedTiles = pickedIndex.map((i) => myOnHandDeck[i]);
-
+        console.log("auto9");
         actionResponse = this.getActionFromTiles( pickedTiles , state);
+        console.log("auto10");
       }
     }
 

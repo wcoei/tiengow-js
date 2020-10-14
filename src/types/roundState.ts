@@ -1,9 +1,8 @@
-import Tiles from './tile';
-import Action from './action';
-import RoundResult from './roundResult';
+import Tiles from "./tile";
+import Action from "./action";
+import RoundResult from "./roundResult";
 
-interface RoundState
-{
+interface RoundState {
   hostPlayer: number;
   currentPlayer: number;
   multiplier: number;
@@ -16,6 +15,7 @@ interface RoundState
   turnProgress: number;
   isEnd: boolean;
   roundResult?: RoundResult;
-};
+  isTurnEnd: boolean;
+}
 
 export default RoundState;

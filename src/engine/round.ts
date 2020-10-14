@@ -10,8 +10,11 @@ import combinations, { combinationDetail } from "../types/combination";
 import CombinationTypes from "../types/combinationType";
 import CombintationTypes from "../types/combinationType";
 import RoundResult from "../types/roundResult";
-import { pickRandomNumbers} from "../common/util";
-import { getAllLegalCombinationFromTiles, getWinningAction } from "../common/tileUtil";
+import { pickRandomNumbers } from "../common/util";
+import {
+  getAllLegalCombinationFromTiles,
+  getWinningAction,
+} from "../common/tileUtil";
 import { exception } from "console";
 
 class Round {
@@ -39,12 +42,25 @@ class Round {
     this.multiplier = multiplier;
   }
 
-  public step(actionResponse: ActionResponse): { isSuccess: boolean; message: string } {
+  public step(
+    actionResponse: ActionResponse
+  ): { isSuccess: boolean; message: string } {
     //no more action is allowed if the round is ended
     if (this.isEnd) {
       return {
         isSuccess: false,
         message: "This round is already ended. No more actions is allowed. ",
+      };
+    }
+
+    if (this.turnProgress == 4) {
+      console.log("clear turn info");
+      this.turnWinningAction = undefined;
+      this.turnPlayerActions = [];
+      this.turnProgress = 0;
+      return {
+        isSuccess: true,
+        message: "Going to next turn. ",
       };
     }
 
@@ -63,11 +79,16 @@ class Round {
     }
     //push to turn player action history
     this.turnPlayerActions.push(actionResponse.action!);
-    
-    let pickedIndex = actionResponse.action!.tiles.map((tile) => tile.id).sort((tile1, tile2) => tile1 - tile2);
+
+    let pickedIndex = actionResponse
+      .action!.tiles.map((tile) => tile.id)
+      .sort((tile1, tile2) => tile1 - tile2);
     let pickedTiles =
       pickedIndex!
-        .map((i) => this.onHandDecks[this.currentPlayer].find((tile) => tile.id == i)!)
+        .map(
+          (i) =>
+            this.onHandDecks[this.currentPlayer].find((tile) => tile.id == i)!
+        )
         .sort((tile1, tile2) => tile1!.id - tile2!.id) ?? [];
 
     // push tiles to the shownDecks but if the action is PASS, don't push
@@ -79,19 +100,27 @@ class Round {
 
     // remove the tiles which is picked from on hand deck in this action
     for (let i = pickedIndex.length - 1; i >= 0; i--) {
-      for (let j = this.onHandDecks[this.currentPlayer].length - 1; j >= 0; j--) {
+      for (
+        let j = this.onHandDecks[this.currentPlayer].length - 1;
+        j >= 0;
+        j--
+      ) {
         if (pickedIndex[i] == this.onHandDecks[this.currentPlayer][j]?.id) {
           delete this.onHandDecks[this.currentPlayer][j];
         }
       }
     }
-    this.onHandDecks[this.currentPlayer] = this.onHandDecks[this.currentPlayer].filter((tile) => tile != undefined);
+    this.onHandDecks[this.currentPlayer] = this.onHandDecks[
+      this.currentPlayer
+    ].filter((tile) => tile != undefined);
 
     //pay prime bonus if it is not ending the turn
     if (this.onHandDecks[this.currentPlayer].length != 0) {
       if (
-        actionResponse.action?.combination.type == CombinationTypes.PrimeCivil ||
-        actionResponse.action?.combination.type == CombinationTypes.PrimeMilitary
+        actionResponse.action?.combination.type ==
+          CombinationTypes.PrimeCivil ||
+        actionResponse.action?.combination.type ==
+          CombinationTypes.PrimeMilitary
       ) {
         this._payBonus(this.currentPlayer, 2);
       }
@@ -110,18 +139,18 @@ class Round {
     //end of turn
     if (this.turnProgress == 4) {
       //winning will take the piles in this round
-      this.playerPiles[this.turnWinningAction!.playerId!] += this.turnWinningAction!.tiles.length!;
+      this.playerPiles[
+        this.turnWinningAction!.playerId!
+      ] += this.turnWinningAction!.tiles.length!;
       //the winning of this turn will be the first player of next turn
       this.currentPlayer = this.turnWinningAction?.playerId!;
 
       //if not ending game, evaluate Quadruple Bonus
-      if (this.isEnd &&  this.turnWinningAction!.combination.type == CombinationTypes.Quadruple) {
+      if (
+        this.isEnd &&
+        this.turnWinningAction!.combination.type == CombinationTypes.Quadruple
+      ) {
         this._payBonus(this.turnWinningAction!.playerId!, 4);
-      }
-      if (!this.isEnd) {
-        this.turnWinningAction = undefined;
-        this.turnPlayerActions = [];
-        this.turnProgress = 0;  
       }
     }
     //if not the end of turn, set the next player to currentPlayer
@@ -153,6 +182,7 @@ class Round {
       playerPiles: _.cloneDeep(this.playerPiles),
       isEnd: this.isEnd,
       roundResult: this.roundResult,
+      isTurnEnd: this.turnProgress == 4,
     };
   }
 
@@ -175,7 +205,10 @@ class Round {
   }
 
   private _endRound() {
-    if (this.turnPlayerActions.length != 4 && this.turnWinningAction == undefined) {
+    if (
+      this.turnPlayerActions.length != 4 &&
+      this.turnWinningAction == undefined
+    ) {
       throw exception("wrong timing to call _endRound");
     }
 
@@ -186,7 +219,8 @@ class Round {
 
     //catch logic
     if (
-      (this.turnWinningAction!.combination.code == "SIX1" && this.turnPlayerActions[0].combination.code == "THREE1") ||
+      (this.turnWinningAction!.combination.code == "SIX1" &&
+        this.turnPlayerActions[0].combination.code == "THREE1") ||
       (this.turnWinningAction!.combination.code.substring(0, 3) == "LEG" &&
         this.turnPlayerActions[0].combination.code.substring(0, 6) == "MALLET")
     ) {
@@ -195,7 +229,9 @@ class Round {
     }
 
     // If Quadruple ending game, multiple by 4
-    else if (this.turnWinningAction?.combination.type == CombinationTypes.Quadruple) {
+    else if (
+      this.turnWinningAction?.combination.type == CombinationTypes.Quadruple
+    ) {
       bonusMultiplier = 4;
     }
 
@@ -206,11 +242,13 @@ class Round {
     for (let i = 0; i < 3; i++) {
       playerIndex = (playerIndex + 1) % 4;
 
-      // bonus Multiplier not apply on extra pile 
-      let actualBonusMultiplier = scores[playerIndex] >= 0 ? 1 : bonusMultiplier;
+      // bonus Multiplier not apply on extra pile
+      let actualBonusMultiplier =
+        scores[playerIndex] >= 0 ? 1 : bonusMultiplier;
       // if the loser is the host, his loss will be multiplied
       if (this.hostPlayer == playerIndex) {
-        this.payout[playerIndex] = scores[playerIndex] * this.multiplier * bonusMultiplier;
+        this.payout[playerIndex] =
+          scores[playerIndex] * this.multiplier * bonusMultiplier;
       } else {
         this.payout[playerIndex] = scores[playerIndex] * bonusMultiplier;
       }
@@ -223,8 +261,13 @@ class Round {
     if (isCatch) {
       playerIndex = this.turnWinningAction!.playerId;
       for (let i = 0; i < 3; i++) {
-        if (playerIndex != this.turnPlayerActions[0].playerId && this.payout[playerIndex] < 0) {
-          this.payout[this.turnPlayerActions[0].playerId] += this.payout[playerIndex];
+        if (
+          playerIndex != this.turnPlayerActions[0].playerId &&
+          this.payout[playerIndex] < 0
+        ) {
+          this.payout[this.turnPlayerActions[0].playerId] += this.payout[
+            playerIndex
+          ];
           this.payout[playerIndex] = 0;
         }
       }
@@ -233,7 +276,7 @@ class Round {
       winner: this.turnWinningAction!.playerId,
       bonus: this.bonus,
       payout: this.payout,
-    }
+    };
   }
 }
 
