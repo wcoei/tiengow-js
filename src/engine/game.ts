@@ -69,12 +69,14 @@ class Game {
         this.currentHost,
         this.currentMultiplier
       );
-      this.roundState = round.getRoundState(this.currentHost);
+      this.roundState = round.getRoundState();
       console.clear();
       console.log(`Round ${r + 1} start.`);
+      this.displayState(this.roundState);
 
       while (!this.roundState!.isEnd) {
-        this.displayState(this.roundState);
+
+        let myOnHandDeck = this.roundState.onHandDecks![this.roundState!.currentPlayer];
         if (
           this.roundState!.currentPlayer == 0 &&
           !this.players[this.roundState!.currentPlayer].isCPU
@@ -98,10 +100,10 @@ class Game {
                 break;
               }
               let digit: number = Number.parseInt(inputNumbers[i]);
-              if (digit > this.roundState!.myOnHandDeck!.length || digit < 1) {
+              if (digit > myOnHandDeck!.length || digit < 1) {
                 console.log(
                   `You should choose tiles from position 1 to ${
-                    this.roundState!.myOnHandDeck!.length
+                    myOnHandDeck.length
                   }. `
                 );
                 isInputValid = false;
@@ -116,7 +118,7 @@ class Game {
             }
             if (isInputValid) {
               pickedTiles = pickedIndex
-                .map((i) => this.roundState!.myOnHandDeck![i - 1])
+                .map((i) => myOnHandDeck![i - 1])
                 .sort((tile1, tile2) => tile1!.id - tile2!.id)!;
             } else {
               pickedIndex = [];
@@ -131,16 +133,15 @@ class Game {
           }
         } else {
           let actionResponse = this.players[this.roundState!.currentPlayer].autoAction(this.roundState);
-          console.log("##action response"+JSON.stringify(actionResponse, null,'\t'));
           const result = round.step2(actionResponse);
-          console.log("***" + result.message);
           if (!result.isSuccess) {
             console.log(result.message);
             await ask("");
           }
         }
 
-        this.roundState = round.getRoundState(this.roundState!.currentPlayer);
+        this.roundState = round.getRoundState();
+        this.displayState(this.roundState);
 
         if (this.roundState!.isEnd) {
           this.firstPlayer = this.roundState!.roundResult!.winner;
@@ -157,18 +158,18 @@ class Game {
             this.currentHost = this.roundState!.roundResult!.winner;
             this.currentMultiplier = 2;
           }
-          await sleep(500);
-        } else {
-          //console.log(JSON.stringify(round,null,'\t'));
-          //await ask("");
-          await sleep(10);
+        } 
+        //wait if not all players are robots  
+        if (this.players.find(player => !player.isCPU)) {
+          await ask("");
         }
+
       }
     }
   }
 
   displayState(state: RoundState) {
-    //console.clear();
+    console.clear();
     console.log(`Turn: ${state.turnProgress + 1}/4`);
     console.log(
       `Current Player: ${state.currentPlayer}; Current Host: ${
@@ -211,7 +212,7 @@ class Game {
     });
 
     console.log(
-      `\nMy Deck: ${state.myOnHandDeck
+      `\nMy Deck: ${state.playerDecks![state.currentPlayer]
         ?.map((tile, i) => `${i + 1}:${tile.code}`)
         .join(", ")}`
     );

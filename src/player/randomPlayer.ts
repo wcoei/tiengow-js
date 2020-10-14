@@ -6,6 +6,7 @@ import { pickRandomNumbers } from "../common/util";
 import Tile from "../types/tile";
 
 import { exception } from "console";
+import Round from "../engine/round";
 
 class RandomPlayer extends Player {
   constructor(name: string, isCheat: boolean, isCPU: boolean) {
@@ -13,7 +14,8 @@ class RandomPlayer extends Player {
   }
 
   public autoAction(state: RoundState) : ActionResponse {
-    let allCombos = getAllLegalCombinationFromTiles(state.myOnHandDeck!);
+    let myOnHandDeck = state.onHandDecks![state.currentPlayer];
+    let allCombos = getAllLegalCombinationFromTiles(myOnHandDeck);
     let actionResponse;
     //if current player is the first player in this turn, pick a random legal moves
     if (state.turnWinningAction == undefined) {
@@ -33,16 +35,15 @@ class RandomPlayer extends Player {
           allCombos[Math.floor(Math.random() * allCombos.length)].tiles, state
         );
       }
-
       //pick random tiles following the previous action and PASS
       else {
         let pickedIndex = pickRandomNumbers(
           0,
-          state.myOnHandDeck!.length,
+          myOnHandDeck.length,
           state.turnWinningAction!.tiles.length
         );
 
-        let pickedTiles = pickedIndex.map((i) => state.myOnHandDeck![i]);
+        let pickedTiles = pickedIndex.map((i) => myOnHandDeck[i]);
 
         actionResponse = this.getActionFromTiles( pickedTiles , state);
       }

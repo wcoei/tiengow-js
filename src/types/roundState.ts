@@ -10,7 +10,6 @@ interface RoundState
   playerDecks?: Tiles[][];
   shownDecks?: Tiles[][];
   onHandDecks?: Tiles[][];
-  myOnHandDeck?: Tiles[],
   turnPlayerActions: Action[];
   turnWinningAction?: Action;
   playerPiles: number[];

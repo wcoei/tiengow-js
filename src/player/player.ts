@@ -24,6 +24,9 @@ abstract class Players {
     actionTiles: Tiles[],
     state: RoundState
   ): ActionResponse {
+
+    let myOnHandDeck = state.onHandDecks![state.currentPlayer];
+
     //presort the action tiles
     actionTiles = actionTiles.sort((tile1, tile2) => tile1.id - tile2.id);
     let legalActions = getAllLegalCombinationFromTiles(actionTiles);
@@ -46,7 +49,7 @@ abstract class Players {
       }
       //if it is the last round and you have no pile, you can only pass the turn
       if (
-        state.myOnHandDeck!.length == 1 &&
+        myOnHandDeck.length == 1 &&
         state.playerPiles[state.currentPlayer] == 0
       ) {
         legalActions = [];
