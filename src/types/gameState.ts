@@ -1,5 +1,6 @@
 import RoundState from "./roundState";
 import Player from "../player/player";
+import Tile from "./tile";
 
 interface GameState {
   numOfRounds: number;
@@ -11,6 +12,7 @@ interface GameState {
   currentHost: number;
   totalScore: number[];
   isEnd: boolean;
+  myOnHandDeck: Tile[];
 }
 
 export default GameState;

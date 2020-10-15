@@ -1,5 +1,5 @@
 import faker from "faker";
-import _ from "lodash";
+import _, { round } from "lodash";
 
 import Round from "./round";
 import Player from "../player/player";
@@ -102,16 +102,29 @@ class Game {
   }
 
   public getGameState(playerId: number): GameState {
+    let roundState = _.cloneDeep(this.roundState!);
+    if (!this.players[playerId].isCheat) {
+      roundState.playerDecks = undefined;
+      roundState.onHandDecks = undefined;
+      roundState.turnPlayerActions = roundState.turnPlayerActions.map(action => {
+        if (action.combination.code == "PASS") {
+          action.tiles = [];
+        }
+        return action;
+      });
+    }
+
     return {
       numOfRounds: this.numOfRounds,
       currentRoundIndex: this.currentRoundIndex,
-      players: this.players,
+      players: _.cloneDeep(this.players),
       firstPlayer: this.firstPlayer,
-      roundState: this.roundState,
+      roundState,
       currentMultiplier: this.currentMultiplier,
       currentHost: this.currentHost,
       totalScore: this.totalScore,
       isEnd: this.isEnd,
+      myOnHandDeck: this.roundState!.onHandDecks![playerId]!,
     };
   }
 

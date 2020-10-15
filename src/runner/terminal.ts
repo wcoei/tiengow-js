@@ -30,7 +30,7 @@ class TerminalRunner {
           continue;
         }
       } else {
-        let inputTiles = await this._getInputTilesFromConsole(this.state)
+        let inputTiles = await this._getInputTilesFromConsole(this.state);
         const result = game.step(inputTiles);
         if (!result.isSuccess) {
           console.log(result.message);
@@ -41,11 +41,11 @@ class TerminalRunner {
       this._displayState(this.state);
       if (this.state.roundState!.isEnd || this.state.roundState!.isTurnEnd) {
         //await ask("Press enter to continue");
-        if(this.state.players.find(player => !player.isCPU)) {
+        if (this.state.players.find((player) => !player.isCPU)) {
           await ask("Press enter to continue. ");
         }
         await sleep(10);
-        const result =  game.step();
+        const result = game.step();
         this.state = game.getGameState(this._myPlayerId);
         this._displayState(this.state);
       }
@@ -53,7 +53,6 @@ class TerminalRunner {
     }
   }
   private async _getInputTilesFromConsole(state: GameState): Promise<Tile[]> {
-    let myOnHandDeck = state.roundState!.onHandDecks![state.roundState!.currentPlayer];
     let pickedIndex: number[] = [];
     let pickedTiles: Tile[] = [];
     do {
@@ -65,14 +64,17 @@ class TerminalRunner {
       }
       const inputNumbers = inputString.trim().split(",");
       for (let i = 0; i < inputNumbers.length; i++) {
+        if (inputNumbers[i] == "") {
+          continue;
+        }
         if (isNaN(Number(inputNumbers[i]))) {
           console.log(`You should input digits. `);
           isInputValid = false;
           break;
         }
         let digit: number = Number.parseInt(inputNumbers[i]);
-        if (digit > myOnHandDeck!.length || digit < 1) {
-          console.log(`You should choose tiles from position 1 to ${myOnHandDeck.length}. `);
+        if (digit > state.myOnHandDeck!.length || digit < 1) {
+          console.log(`You should choose tiles from position 1 to ${state.myOnHandDeck.length}. `);
           isInputValid = false;
           break;
         }
@@ -84,41 +86,36 @@ class TerminalRunner {
         pickedIndex.push(digit);
       }
       if (isInputValid) {
-        pickedTiles = pickedIndex.map((i) => myOnHandDeck![i - 1]).sort((tile1, tile2) => tile1!.id - tile2!.id)!;
+        pickedTiles = pickedIndex.map((i) => state.myOnHandDeck![i - 1]).sort((tile1, tile2) => tile1!.id - tile2!.id)!;
       } else {
         pickedIndex = [];
       }
     } while (pickedTiles.length <= 0);
     return new Promise((resolve) => resolve(pickedTiles));
   }
-  
   private _displayState(state: GameState) {
     console.clear();
-    console.log(`Round: ${state.currentRoundIndex+1}`);
+    console.log(`Round: ${state.currentRoundIndex + 1}`);
     let roundState = state.roundState!;
     if (roundState != undefined) {
       console.log(`Turn: ${roundState.turnProgress + 1}/4`);
       console.log(
-        `Current Player: ${roundState.currentPlayer}; Current Host: ${
-          roundState!.hostPlayer
-        }; Multiplier:  ${roundState.multiplier}`
+        `Current Player: ${roundState.currentPlayer}; Current Host: ${roundState!.hostPlayer}; Multiplier:  ${
+          roundState.multiplier
+        }`
       );
-      console.log("\nPlayer shown Tites: ");
-      //TODO: handle cheat mode
-      if (false && roundState.onHandDecks) {
+      console.log("\nPlayer shown tites: ");
+      roundState.shownDecks!.forEach((deck, i) => {
+        console.log(
+          `\tPlayer ${i} (${roundState.playerPiles[i]}): ${deck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
+        );
+      });
+
+      console.log("\nPlayer on hand tites: ");
+      if (roundState.onHandDecks) {
         roundState!.onHandDecks!.forEach((deck, i) => {
           console.log(
-            `\tPlayer ${i} (${roundState.playerPiles[i]}): ${deck
-              .map((tile, i) => `${i + 1}:${tile.code}`)
-              .join(", ")}`
-          );
-        });
-      } else {
-        roundState.shownDecks!.forEach((deck, i) => {
-          console.log(
-            `\tPlayer ${i} (${roundState.playerPiles[i]}): ${deck
-              .map((tile, i) => `${i + 1}:${tile.code}`)
-              .join(", ")}`
+            `\tPlayer ${i} (${roundState.playerPiles[i]}): ${deck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`
           );
         });
       }
@@ -126,23 +123,13 @@ class TerminalRunner {
       console.log("\nLast turn actions:");
       roundState.turnPlayerActions.forEach((action, i) => {
         console.log(
-          `\t${i}--Player ${action.playerId} action: ${
-            action.combination.type
-          }; tiles: [${
-            action.tiles
-              ? action.tiles.map((tiles) => tiles.code).join(", ")
-              : "NOT SHOWN"
+          `\t${i}--Player ${action.playerId} action: ${action.combination.type}; tiles: [${
+            action.tiles ? action.tiles.map((tiles) => tiles.code).join(", ") : "NOT SHOWN"
           }] `
         );
       });
 
-      console.log(
-        `\nMy Deck: ${roundState
-          .onHandDecks![roundState.currentPlayer]?.map(
-            (tile, i) => `${i + 1}:${tile.code}`
-          )
-          .join(", ")}`
-      );
+      console.log(`\nMy Deck: ${state.myOnHandDeck.map((tile, i) => `${i + 1}:${tile.code}`).join(", ")}`);
 
       if (roundState.roundResult) {
         console.log(`\nWinner is ${roundState.roundResult.winner}`);
@@ -152,7 +139,7 @@ class TerminalRunner {
           );
         }
       }
-      if(roundState.isTurnEnd && !roundState.roundResult) {
+      if (roundState.isTurnEnd && !roundState.roundResult) {
         console.log(`\nTurn winner is ${roundState.turnWinningAction?.playerId}`);
       }
     }
