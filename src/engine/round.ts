@@ -12,7 +12,7 @@ import CombintationTypes from "../types/combinationType";
 import RoundResult from "../types/roundResult";
 import { pickRandomNumbers } from "../common/util";
 import { getAllLegalCombinationFromTiles, getWinningAction } from "../common/tileUtil";
-import { exception } from "console";
+
 
 class Round {
   protected decks: Deck = new Deck();
@@ -118,8 +118,9 @@ class Round {
     this.turnWinningAction = getWinningAction(this.turnPlayerActions);
 
     //all player decks is empty, this is the end of round
-    if (_.flatten(this.onHandDecks).length == 0) {
-      this.isEnd = true;
+    // if (_.flatten(this.onHandDecks).length == 0) {
+    if (this.onHandDecks.flat().length == 0) {
+        this.isEnd = true;
     }
 
     //end of turn
@@ -187,7 +188,7 @@ class Round {
 
   private _endRound() {
     if (this.turnPlayerActions.length != 4 && this.turnWinningAction == undefined) {
-      throw exception("wrong timing to call _endRound");
+      throw new Error("wrong timing to call _endRound");
     }
 
     // pre calculate the score from player piles obtained

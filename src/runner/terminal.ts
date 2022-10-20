@@ -1,12 +1,11 @@
-import faker from "faker";
-
+import { faker } from "@faker-js/faker";
 import { ask, sleep } from "../common/util";
 import Game from "../engine/game";
 import PlayerRegister from "../types/playerRegister";
 import PlayerType from "../types/playerType";
 import GameState from "../types/gameState";
 import Tile from "../types/tile";
-import { result } from "lodash";
+
 
 class TerminalRunner {
   private _myPlayerId = 0;
@@ -156,7 +155,8 @@ class TerminalRunner {
     // if name is not inputted, all players are robots
     if (name == "") {
       isCPU = true;
-      name = faker.name.findName();
+
+      name = faker.name.fullName();
       playerType = PlayerType.Random;
     }
     players.push({ name, isCPU, isCheat, playerType });
@@ -164,7 +164,7 @@ class TerminalRunner {
     // create robot record for the remaining three players
     for (var i = 0; i < 3; i++) {
       players.push({
-        name: faker.name.findName(),
+        name: faker.name.fullName(),
         isCPU: true,
         isCheat,
         playerType: PlayerType.Random,

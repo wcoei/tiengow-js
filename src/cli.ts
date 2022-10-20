@@ -2,5 +2,8 @@
 import TerminalRunner from "./runner/terminal";
 
 const runner = new TerminalRunner();
-runner.run();
+
+(async () => {
+    await runner.run();
+})();
 

@@ -5,8 +5,6 @@ import { getAllLegalCombinationFromTiles, getWinningAction } from "../common/til
 import { pickRandomNumbers } from "../common/util";
 import Tile from "../types/tile";
 
-import { exception } from "console";
-import Round from "../engine/round";
 
 class RandomPlayer extends Player {
   constructor(name: string, isCheat: boolean, isCPU: boolean) {

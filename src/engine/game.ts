@@ -1,17 +1,13 @@
-import faker from "faker";
-import _, { round } from "lodash";
-
 import Round from "./round";
 import Player from "../player/player";
 import HumanPlayer from "../player/humanPlayer";
 import RandomPlayer from "../player/randomPlayer";
 import RoundState from "../types/roundState";
 import Tiles from "../types/tile";
-import ActionResponse from "../types/actionResponse";
 import PlayerType from "../types/playerType";
-import { ask, sleep } from "../common/util";
 import PlayerRegister from "../types/playerRegister";
 import GameState from "../types/gameState";
+import _ from "lodash";
 
 class Game {
   private numOfRounds = 1;
@@ -103,6 +99,7 @@ class Game {
 
   public getGameState(playerId: number): GameState {
     let roundState = _.cloneDeep(this.roundState!);
+    
     if (!this.players[playerId].isCheat) {
       roundState.playerDecks = undefined;
       roundState.onHandDecks = undefined;
