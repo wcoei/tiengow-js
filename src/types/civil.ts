@@ -3,13 +3,13 @@ enum Civils {
   Earth, 
   Man, 
   Harmony, 
-  PlumFlower, 
+  Plum, 
   LongThree,
   Bench, 
-  TigersHead,
+  Axe,
   RedHeadTen,
   LongLegSeven, 
-  RedMalletSix
+  MalletSix
 }
 
 export default Civils;
